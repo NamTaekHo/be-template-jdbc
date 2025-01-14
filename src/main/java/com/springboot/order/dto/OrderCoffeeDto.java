@@ -3,17 +3,14 @@ package com.springboot.order.dto;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-import javax.validation.Valid;
 import javax.validation.constraints.Positive;
-import java.util.List;
 
 @Getter
 @AllArgsConstructor
-public class OrderPostDto {
+public class OrderCoffeeDto {
     @Positive
-    private long memberId;
+    private long coffeeId;
 
-    @Valid
-    private List<OrderCoffeeDto> orderCoffees;
-
+    @Positive
+    private int quantity;
 }

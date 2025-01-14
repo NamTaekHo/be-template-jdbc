@@ -3,9 +3,11 @@ package com.springboot.member.service;
 import com.springboot.exception.BusinessLogicException;
 import com.springboot.exception.ExceptionCode;
 import com.springboot.member.entity.Member;
+import com.springboot.member.repository.MemberRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * V2
@@ -14,33 +16,61 @@ import java.util.List;
  */
 @Service
 public class MemberService {
-    public Member createMember(Member member) {
-        // TODO should business logic
+    private final MemberRepository memberRepository;
 
-        throw new BusinessLogicException(ExceptionCode.NOT_IMPLEMENTATION);
+    public MemberService(MemberRepository memberRepository){
+        this.memberRepository = memberRepository;
+    }
+
+    public Member createMember(Member member) {
+        verifyExistsEmail(member.getEmail());
+
+        return memberRepository.save(member);
     }
 
     public Member updateMember(Member member) {
-        // TODO should business logic
+        Member foundMember = findVerifiedMember(member.getMemberId());
 
-        throw new BusinessLogicException(ExceptionCode.NOT_IMPLEMENTATION);
+        Optional.ofNullable(member.getName())
+                .ifPresent(name -> foundMember.setName(name));
+
+        Optional.ofNullable(member.getPhone())
+                .ifPresent(phone -> foundMember.setPhone(phone));
+
+        return memberRepository.save(foundMember);
     }
 
     public Member findMember(long memberId) {
-        // TODO should business logic
-
-        throw new BusinessLogicException(ExceptionCode.NOT_IMPLEMENTATION);
+        return findVerifiedMember(memberId);
     }
 
     public List<Member> findMembers() {
-        // TODO should business logic
-
-        throw new BusinessLogicException(ExceptionCode.NOT_IMPLEMENTATION);
+        return (List<Member>)memberRepository.findAll();
     }
 
     public void deleteMember(long memberId) {
-        // TODO should business logic
+        Member foundMember = findVerifiedMember(memberId);
+        memberRepository.delete(foundMember);
+    }
 
-        throw new BusinessLogicException(ExceptionCode.NOT_IMPLEMENTATION);
+    // 검증 예외처리 로직 분리
+    private void verifyExistsEmail(String email){
+        Optional<Member> optionalMember = memberRepository.findByEmail(email);
+        if(optionalMember.isPresent()){
+            throw new BusinessLogicException(ExceptionCode.MEMBER_EXISTS);
+        }
+    }
+
+    private Member findVerifiedMember(long memberId){
+        Optional<Member> optionalMember = memberRepository.findById(memberId);
+
+        return optionalMember.orElseThrow(() -> new BusinessLogicException(ExceptionCode.MEMBER_NOT_FOUND));
+    }
+
+    public void verifyExistsMemberId(long memberId){
+        Optional<Member> optionalMember = memberRepository.findById(memberId);
+        if(!optionalMember.isPresent()){
+            throw new BusinessLogicException(ExceptionCode.MEMBER_NOT_FOUND);
+        }
     }
 }

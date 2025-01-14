@@ -9,9 +9,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Positive;
+import java.net.URI;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -30,7 +32,14 @@ public class OrderController {
     @PostMapping
     public ResponseEntity postOrder(@Valid @RequestBody OrderPostDto orderPostDto) {
         Order order = orderService.createOrder(mapper.orderPostDtoToOrder(orderPostDto));
-        return new ResponseEntity<>(mapper.orderToOrderResponseDto(order), HttpStatus.CREATED);
+
+        URI location = UriComponentsBuilder
+                .newInstance()
+                .path("/v5/orders" + "/{order-id}")
+                .buildAndExpand(order.getOrderId())
+                .toUri(); // -> /v5/orders/{order-id}
+
+        return ResponseEntity.created(location).build();
     }
 
     @GetMapping("/{order-id}")
@@ -55,7 +64,7 @@ public class OrderController {
     @DeleteMapping("/{order-id}")
     public ResponseEntity cancelOrder(@PathVariable("order-id") long orderId) {
         System.out.println("# cancel order");
-        orderService.cancelOrder();
+        orderService.cancelOrder(orderId);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }
